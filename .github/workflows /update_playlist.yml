@@ -4,7 +4,7 @@ on:
   schedule:
     # Запуск в 11:00 и 17:00 UTC
     - cron: "0 11,17 * * *"
-  workflow_dispatch: # Добавляем возможность ручного запуска
+  workflow_dispatch: # Возможность ручного запуска
 
 jobs:
   update_playlist:
@@ -12,7 +12,16 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+
+      - name: Install dependencies
+        run: |
+          pip install requests
 
       - name: Log current time before execution
         run: |
@@ -27,12 +36,13 @@ jobs:
           echo "Содержимое файла noxx.m3u после изменений:"
           cat noxx.m3u || echo "Файл noxx.m3u не существует."
 
-      - name: Commit changes
+      - name: Commit and push changes
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          git config --global user.email "action@github.com"
-          git config --global user.name "GitHub Actions"
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
 
-          # Проверяем, есть ли изменения в файле noxx.m3u
           if git diff --quiet noxx.m3u; then
             echo "No changes to commit."
           else
