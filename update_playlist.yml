@@ -1,0 +1,47 @@
+name: Update Playlist
+
+on:
+  schedule:
+    # Запуск в 11:00 и 17:00 UTC
+    - cron: "0 11,17 * * *"
+  workflow_dispatch: # Добавляем возможность ручного запуска
+
+jobs:
+  update_playlist:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Log current time before execution
+        run: |
+          echo "Current UTC time before execution: $(date -u)"
+
+      - name: Run update script
+        run: |
+          python update_playlist.py
+
+      - name: Check file content after changes
+        run: |
+          echo "Содержимое файла noxx.m3u после изменений:"
+          cat mpll.m3u || echo "Файл noxx.m3u не существует."
+
+      - name: Commit changes
+        run: |
+          git config --global user.email "action@github.com"
+          git config --global user.name "GitHub Actions"
+
+          # Проверяем, есть ли изменения в файле noxx.m3u
+          if git diff --quiet noxx.m3u; then
+            echo "No changes to commit."
+          else
+            echo "Changes detected in noxx.m3u."
+            git add noxx.m3u
+            git commit -m "Update playlist"
+            git push origin main
+          fi
+
+      - name: Log current time after execution
+        run: |
+          echo "Current UTC time after execution: $(date -u)"
